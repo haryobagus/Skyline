@@ -1,0 +1,7 @@
+Option Explicit
+
+Private Sub Worksheet_FollowHyperlink(ByVal Target As Hyperlink)
+
+If Not Application.Intersect(Selection, Range("skylinearea")) Is Nothing Then sysdetail.Show
+
+End Sub

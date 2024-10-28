@@ -1,0 +1,112 @@
+	Option Explicit
+Option Private Module
+Public skydate As Range
+Public axisy As Integer
+Public interval As Long
+Public skyrange As Range
+Public skycell As Range
+Public plan As Range
+Public y As Integer
+Public fs As Integer
+
+Sub setarea()
+Dim rangedate As Range
+Dim rangearea As Range
+
+On Error Resume Next
+Set rangedate = Application.InputBox(Prompt:="Please Select Timeline Columns", Title:="Range Date", Default:=ActiveWorkbook.Names("skylinedate").RefersTo, Type:=8)
+ActiveWorkbook.Names("skylinedate").RefersToR1C1Local = rangedate
+
+Set rangearea = Application.InputBox(Prompt:="Please Select Skyline Chart Area", Title:="Range Chart Area", Default:=ActiveWorkbook.Names("skylinearea").RefersTo, Type:=8)
+ActiveWorkbook.Names("skylinearea").RefersToR1C1Local = rangearea
+
+End Sub
+
+
+Sub generate()
+
+
+
+With Range("skylinearea")
+    .Clear
+    .Interior.Color = Range("skylineareabg").Interior.Color
+    .Borders(xlEdgeLeft).LineStyle = xlContinuous
+    .Borders(xlEdgeBottom).LineStyle = xlContinuous
+    With .Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .Color = Range("skylineareabg").Offset(0, 1).Interior.Color
+    End With
+End With
+On Error Resume Next
+
+For Each skydate In Range("skylinedate")
+
+    interval = skydate - skydate.Offset(0, -1)
+    If Err.Number > 0 Then
+        interval = skydate.Offset(0, 1) - skydate
+    End If
+    Err.Clear
+
+    axisy = Range("skylinearea").Rows(Range("skylinearea").Rows.Count).Columns(1).Row
+
+    For y = 1 To Range("listplan").Rows.Count
+        Set plan = Range("listplan").Rows(y)
+        If plan.RowHeight > 0 Then
+            Set skycell = Sheet1.Cells(axisy, skydate.Column)
+            If ActiveSheet.Shapes("check2").ControlFormat.Value = 1 And Range("listcomp").Rows(y).Value = "OK" Then
+                If plan <= skydate And plan > (skydate - interval) Then
+                    skycell = Range("listsystem").Rows(y)
+                    axisy = axisy - 1
+                    Call formatting
+                End If
+            End If
+            If Range("listcomp").Rows(y).Value <> "OK" Then
+                If plan <= skydate And plan > (skydate - interval) Then
+                    skycell = Range("listsystem").Rows(y)
+                    axisy = axisy - 1
+                    Call formatting
+                End If
+            End If
+        End If
+    Next
+Next
+
+Range("skylinearea").Select
+
+End Sub
+
+Sub formatting()
+
+fs = Range("fontsize").Value
+
+With skycell
+    .Hyperlinks.Add anchor:=skycell, Address:="", SubAddress:=skycell.Address, ScreenTip:="Click for more detail"
+    .Interior.Color = Range(Range("liststatus").Rows(y)).Interior.Color
+    .Interior.Pattern = Range(Range("liststatus").Rows(y)).Interior.Pattern
+    .Interior.PatternColor = Range(Range("liststatus").Rows(y)).Interior.PatternColor
+    .Font.Color = Range(Range("liststatus").Rows(y)).Font.Color
+    .Font.Underline = xlUnderlineStyleNone
+    .Font.Bold = True
+    .Font.Size = fs
+    .WrapText = True
+    .HorizontalAlignment = xlCenter
+    With .Borders
+        .LineStyle = xlContinuous
+        .Color = Range(Range("liststatus").Rows(plan.Row - Range("liststatus").Row + 1)).Offset(0, 1).Interior.Color
+    End With
+End With
+
+End Sub
+
+Sub refresh()
+
+Dim x As ListObject
+
+
+For Each x In ActiveSheet.ListObjects
+    x.AutoFilter.ShowAllData
+Next
+
+End Sub
+
+
